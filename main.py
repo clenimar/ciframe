@@ -1,4 +1,5 @@
 # coding: utf-8
+import csv
 import json
 from flask import Flask, request
 import sys
@@ -101,6 +102,38 @@ for k,v in genero_musicas.items():
 f.close()
 
 
+results = []
+
+
+def save_results_to_file():
+    """write all measurements to csv files."""
+    HEADER = ["component", "ts_start", "ts_end", "ts_delta"]
+    with open("measurements/request_time.csv") as f:
+        w = csv.writer(f, delimiter=',')
+        w.writerow(HEADER)
+
+        for r in results:
+            w.writerow(r)
+
+
+def measure_time(f):
+    """a decorator to measure a method's execution time."""
+    def wrapper(*args, **kwargs):
+        _s = time.time()
+        func = f(*args, **kwargs)
+        _e = time.time()
+
+        results.append([
+            f.__name__,
+            _s,
+            _e,
+            _s - _e
+        ])
+
+        return func
+
+
+@measure_time
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
@@ -109,13 +142,16 @@ params: key e generos (opcional). Caso generos não sejam definidos, a busca nã
 exemplo 1: /search?key=no dia em que eu saí de casa
 exemplo 2: /search?key=no dia em que eu saí de casa&generos=Rock,Samba '''
 
+
 @app.route('/<path:path>')
 def static_proxy(path):
   # send_static_file will guess the correct MIME type
   return app.send_static_file(path)
 
+
+@measure_time
 @app.route('/search')
-def busca():
+def busca():     
     generos_tag = request.args.get('generos', [])
     pagina_tag = request.args.get('pagina','1')
     keys = request.args.get('key').lower()
@@ -145,31 +181,43 @@ def busca():
     return json.dumps(get_pagina(out, pagina_tag))
 
 # cópia
+@measure_time
 def remover_combinantes(string):
     string = unicodedata.normalize('NFD', string)
     return u''.join(ch for ch in string if unicodedata.category(ch) != 'Mn')
+
+
 
 ''' Retorna as músicas armazenadas no sistema (ordenados por popularidade).
     O serviço é paginado. Cada página tem tamanho 100, por default.
     params: pagina. Caso não seja definida a página, o valor default é 1.
     exemplo 1: /musica?pagina=2
     exemplo 2: /musica'''
+@measure_time
 @app.route('/musicas')
 def get_musicas():
     return json.dumps([v.__dict__ for v in musicas.values()])
 
+
+@measure_time
 @app.route('/generos')
 def get_generos():
     return json.dumps(generos)
 
+
+@measure_time
 @app.route('/acordes')
 def get_acordes():
     return json.dumps(list(acordes))
 
+
+@measure_time
 @app.route('/musica/<m_id>/')
 def get_musica(m_id):
     return json.dumps(musicas[m_id].__dict__)
 
+
+@measure_time
 @app.route('/similares')
 def get_similares():
     # tratando request
@@ -203,6 +251,8 @@ def get_similares():
 
     return json.dumps(get_pagina(similares, pagina_tag))
 
+
+@measure_time
 def get_similares_por_sequencia(id_seq, generos_key):
     # filtra para melhor desempenho
     collection = apply_filtro(musicas.values(), generos_key)
@@ -226,10 +276,13 @@ def get_similares_por_sequencia(id_seq, generos_key):
     return similares
 
 
+@measure_time
 def get_pagina(colecao, pagina_tag):
     sl = (int(pagina_tag) - 1)*TAM_PAGINA
     return colecao[sl:sl+TAM_PAGINA]
 
+
+@measure_time
 def get_similares(acordes, generos_key, id_musica = None):
 
     # filtra para melhor desempenho
@@ -265,7 +318,9 @@ def get_similares(acordes, generos_key, id_musica = None):
     # ordenados por menor diferença, maior interseção e maior popularidade.
     return sorted(similares, key=lambda x: (len(x['diferenca']), -len(x['intersecao'])))
 
+
 ## Filtra a coleção de músicas por gênero.
+@measure_time
 def apply_filtro(musicas, generos_key):
     # filtra para melhor desempenho
     collection = []
@@ -281,3 +336,4 @@ def add_header(response):
 
 if __name__ == '__main__':
     app.run(debug=True)
+    save_results_to_file()
