@@ -153,8 +153,8 @@ def static_proxy(path):
   return app.send_static_file(path)
 
 
-@measure_time
 @app.route('/search')
+@measure_time
 def busca():     
     generos_tag = request.args.get('generos', [])
     pagina_tag = request.args.get('pagina','1')
@@ -197,32 +197,32 @@ def remover_combinantes(string):
     params: pagina. Caso não seja definida a página, o valor default é 1.
     exemplo 1: /musica?pagina=2
     exemplo 2: /musica'''
-@measure_time
 @app.route('/musicas')
+@measure_time
 def get_musicas():
     return json.dumps([v.__dict__ for v in musicas.values()])
 
 
-@measure_time
 @app.route('/generos')
+@measure_time
 def get_generos():
     return json.dumps(generos)
 
 
-@measure_time
 @app.route('/acordes')
+@measure_time
 def get_acordes():
     return json.dumps(list(acordes))
 
 
-@measure_time
 @app.route('/musica/<m_id>/')
+@measure_time
 def get_musica(m_id):
     return json.dumps(musicas[m_id].__dict__)
 
 
-@measure_time
 @app.route('/similares')
+@measure_time
 def get_similares():
     # tratando request
     acordes_tag = request.args.get('acordes')
