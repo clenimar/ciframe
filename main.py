@@ -131,7 +131,6 @@ def measure_time(f):
             _e,
             _e - _s
         ])
-        print "oie"
         return func
 
     return wrapper
