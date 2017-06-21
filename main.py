@@ -108,7 +108,7 @@ results = []
 def save_results_to_file():
     """write all measurements to csv files."""
     HEADER = ["component", "ts_start", "ts_end", "ts_delta"]
-    with open("measurements/request_time.csv") as f:
+    with open("measurements/request_time.csv", "w") as f:
         w = csv.writer(f, delimiter=',')
         w.writerow(HEADER)
 
