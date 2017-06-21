@@ -1,6 +1,8 @@
 # coding: utf-8
 import csv
+from functools import wraps
 import json
+import time
 from flask import Flask, request
 import sys
 from musica import *
@@ -107,17 +109,17 @@ results = []
 
 def save_results_to_file():
     """write all measurements to csv files."""
-    HEADER = ["component", "ts_start", "ts_end", "ts_delta"]
     with open("measurements/request_time.csv", "w") as f:
         w = csv.writer(f, delimiter=',')
-        w.writerow(HEADER)
 
+        print results
         for r in results:
             w.writerow(r)
 
 
 def measure_time(f):
     """a decorator to measure a method's execution time."""
+    @wraps(f)
     def wrapper(*args, **kwargs):
         _s = time.time()
         func = f(*args, **kwargs)
@@ -127,14 +129,17 @@ def measure_time(f):
             f.__name__,
             _s,
             _e,
-            _s - _e
+            _e - _s
         ])
-
+        print "oie"
         return func
 
+    return wrapper
 
-@measure_time
+
+
 @app.route('/')
+@measure_time
 def index():
     return app.send_static_file('index.html')
 ''' Busca por músicas que possuem no título ou no nome do artista o argumento passado por key.
@@ -337,3 +342,4 @@ def add_header(response):
 if __name__ == '__main__':
     app.run(debug=True)
     save_results_to_file()
+    print "bye!"
