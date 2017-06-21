@@ -112,7 +112,6 @@ def save_results_to_file():
     with open("measurements/request_time.csv", "w") as f:
         w = csv.writer(f, delimiter=',')
 
-        print results
         for r in results:
             w.writerow(r)
 
